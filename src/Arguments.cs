@@ -33,6 +33,12 @@ namespace De.Thekid.INotify
         /// --exclude[i]
         public Regex Exclude { get; set; }
 
+        /// -b
+        public string Batch { get; set; }
+
+        /// -id
+        public bool IgnoreDir { get; set; }
+
         /// -e
         public void AddEvents(IEnumerable<string> names)
         {

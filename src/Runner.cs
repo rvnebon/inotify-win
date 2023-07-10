@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.IO;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace De.Thekid.INotify
 {
@@ -45,7 +47,7 @@ namespace De.Thekid.INotify
             var w = (FileSystemWatcher)sender;
             HandleNotification((FileSystemWatcher)sender, e, () => Output(Console.Out, _args.Format, w, Changes[e.ChangeType], e.Name));
         }
-        
+
         private void OnRenameNotification(object sender, RenamedEventArgs e)
         {
             var w = (FileSystemWatcher)sender;
@@ -55,7 +57,7 @@ namespace De.Thekid.INotify
                 Output(Console.Out, _args.Format, w, Change.MOVED_TO, e.Name);
             });
         }
-        
+
         private void HandleNotification(FileSystemWatcher sender, FileSystemEventArgs e, Action outputAction)
         {
             // Lock so we don't output more than one change if we were only supposed to watch for one.
@@ -67,7 +69,7 @@ namespace De.Thekid.INotify
                 {
                     return;
                 }
-        
+
                 if (
                     (null != _args.Exclude && _args.Exclude.IsMatch(e.FullPath)) ||
                     (null != _args.Include && !_args.Include.IsMatch(e.FullPath))
@@ -77,7 +79,7 @@ namespace De.Thekid.INotify
                 }
 
                 outputAction();
-        
+
                 // If only looking for one change, signal to stop
                 if (!_args.Monitor)
                 {
@@ -89,9 +91,10 @@ namespace De.Thekid.INotify
         /// Output method
         protected void Output(TextWriter writer, string[] tokens, FileSystemWatcher source, Change type, string name)
         {
+            var path = Path.Combine(source.Path, name);
             foreach (var token in tokens)
             {
-                var path = Path.Combine(source.Path, name);
+
                 switch (token[0])
                 {
                     case 'e':
@@ -99,6 +102,11 @@ namespace De.Thekid.INotify
                         if (Directory.Exists(path))
                         {
                             writer.Write(",ISDIR");
+
+                            // ignore event if directorty override exists
+                            if (_args.IgnoreDir) {
+                              writer.Write(",ignoring dir event");
+                            }
                         }
                         break;
                     case 'f': writer.Write(Path.GetFileName(path)); break;
@@ -108,6 +116,25 @@ namespace De.Thekid.INotify
                 }
             }
             writer.WriteLine();
+
+
+            // ignore event if directorty override exists
+            if (
+              (_args.IgnoreDir && !Directory.Exists(path)) ||
+              !_args.IgnoreDir
+            ) {
+
+              string pattern = @"^\s*[""'']?|[""'']?\s*$";
+              string script = new Regex(pattern).Replace(_args.Batch, "");
+              string eventPath = "\"" + Path.Combine(source.Path, Path.GetDirectoryName(path), Path.GetFileName(path)) + "\"";
+
+              ProcessStartInfo si = new System.Diagnostics.ProcessStartInfo();
+              si.CreateNoWindow = true;
+              si.FileName = script;
+              si.Arguments = eventPath;
+              si.WindowStyle = ProcessWindowStyle.Minimized;
+              System.Diagnostics.Process.Start(si);
+            }
         }
 
         public void Processor(object data)

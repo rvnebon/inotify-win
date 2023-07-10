@@ -107,6 +107,14 @@ namespace De.Thekid.INotify
             {
                 result.Include = new Regex(option.Split(new Char[]{'='}, 2)[1], RegexOptions.IgnoreCase);
             }
+            else if ("--batch" == option || "-b" == option)
+            {
+                result.Batch = args[++i];
+            }
+            else if ("--ignore-dir" == option || "-i" == option)
+            {
+                result.IgnoreDir = true;
+            }
             else if (Directory.Exists(option) || File.Exists(option))
             {
                 result.Paths.Add(System.IO.Path.GetFullPath(option));

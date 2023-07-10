@@ -25,6 +25,8 @@ Options:
 -m/--monitor:    Keep running until killed (e.g. via Ctrl+C)
 -q/--quiet:      Do not output information about actions
 -e/--event list: Events (create, modify, delete, move) to watch, comma-separated. Default: all
+-b/--batch file: Executes the specified batch file with the event detected as a parameter
+-i/--ignore-dir: In-conjunction w/ -b. Where the directory event won't run the specified batch file
 --format format: Format string for output.
 --exclude:       Do not process any events whose filename matches the specified regex
 --excludei:      Ditto, case-insensitive
